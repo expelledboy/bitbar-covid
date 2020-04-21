@@ -2,6 +2,9 @@
 
 Get updates on covid 19 in your country in your status bar.
 
+<p align="center">
+  <img src="assets/demo.png">
+</p>
 
 ### Install
 
