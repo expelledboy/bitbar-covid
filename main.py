@@ -21,7 +21,7 @@ COUNTRIES = ['afghanistan', 'ala-aland-islands', 'albania', 'algeria', 'american
              'lithuania', 'luxembourg', 'macao-sar-china', 'macedonia', 'madagascar', 'malawi', 'malaysia', 'maldives', 'mali', 'malta', 'marshall-islands', 'martinique', 'mauritania', 'mauritius', 'mayotte', 'mexico', 'micronesia', 'moldova', 'monaco', 'mongolia', 'montenegro', 'montserrat', 'morocco', 'mozambique', 'myanmar', 'namibia', 'nauru', 'nepal', 'netherlands', 'netherlands-antilles', 'new-caledonia', 'new-zealand', 'nicaragua', 'niger', 'nigeria', 'niue', 'norfolk-island', 'northern-mariana-islands', 'norway', 'oman', 'pakistan', 'palau', 'palestine', 'panama', 'papua-new-guinea', 'paraguay', 'peru', 'philippines', 'pitcairn', 'poland', 'portugal', 'puerto-rico', 'qatar', 'romania', 'russia', 'rwanda', 'réunion', 'saint-barthélemy', 'saint-helena', 'saint-kitts-and-nevis', 'saint-lucia', 'saint-martin-french-part', 'saint-pierre-and-miquelon', 'saint-vincent-and-the-grenadines', 'samoa', 'san-marino', 'sao-tome-and-principe', 'saudi-arabia', 'senegal', 'serbia', 'seychelles', 'sierra-leone', 'singapore', 'slovakia', 'slovenia', 'solomon-islands', 'somalia', 'south-africa', 'south-georgia-and-the-south-sandwich-islands', 'south-sudan', 'spain', 'sri-lanka', 'sudan', 'suriname', 'svalbard-and-jan-mayen-islands', 'swaziland', 'sweden', 'switzerland', 'syria', 'taiwan', 'tajikistan', 'tanzania', 'thailand', 'timor-leste', 'togo', 'tokelau', 'tonga', 'trinidad-and-tobago', 'tunisia', 'turkey', 'turkmenistan', 'turks-and-caicos-islands', 'tuvalu', 'uganda', 'ukraine', 'united-arab-emirates', 'united-kingdom', 'united-states', 'uruguay', 'us-minor-outlying-islands', 'uzbekistan', 'vanuatu', 'venezuela', 'vietnam', 'virgin-islands', 'wallis-and-futuna-islands', 'western-sahara', 'yemen', 'zambia', 'zimbabwe']
 
 
-COVID_API_URL = 'https://api.covid19api.com/live/country/'
+COVID_API_URL = 'https://api.covid19api.com/summary'
 BITBAR_CONFIG_FILE = f'{os.environ["HOME"]}/.config/bitbar/covid.json'
 DEFAULT_CONFIG = {'country': 'south-africa'}
 
@@ -49,23 +49,27 @@ def make_call(prog, *args):
 
 
 def get_stats_for_country(country):
-    recent_updates = json.loads(urlopen(Request(
-        COVID_API_URL + country,
+    world = json.loads(urlopen(Request(
+        COVID_API_URL,
         headers={"Accept": 'application/json'}
     )).read())
-    return recent_updates[-1]
+    countries = [country["Slug"] for country in world["Countries"]]
+    index = countries.index(country)
+    return world["Countries"][index]
 
 
 def show_title(stats):
-    deaths = stats["Deaths"]
-    active = stats["Active"]
+    deaths = stats["TotalDeaths"]
+    confirmed = stats["TotalConfirmed"]
+    recovered = stats["TotalRecovered"]
+    active = confirmed - recovered
     print(f'{active}🤢 {deaths}💀')
 
 
-def show_change_country_menu(stats):
+def show_change_country_menu(countries):
     print('---')
     print('Change Country')
-    for country in COUNTRIES:
+    for country in countries:
         text = f'-- {country}'
         action = make_call(sys.argv[0], "set_country", country)
         print("%s|%s terminal=false refresh=true" % (text, action))
