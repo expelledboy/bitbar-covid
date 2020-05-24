@@ -23,7 +23,10 @@ COUNTRIES = ['afghanistan', 'ala-aland-islands', 'albania', 'algeria', 'american
 
 COVID_API_URL = 'https://api.covid19api.com/summary'
 BITBAR_CONFIG_FILE = f'{os.environ["HOME"]}/.config/bitbar/covid.json'
+BITBAR_DATA_FILE = '/tmp/covid.data.json'
 DEFAULT_CONFIG = {'country': 'south-africa'}
+
+ERROR = None
 
 
 def load_config():
@@ -40,6 +43,20 @@ def save_config(config):
         json.dump(config, f)
 
 
+def load_data():
+    try:
+        with open(BITBAR_DATA_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise Exception("Failed to load data")
+
+
+def save_data(data):
+    os.makedirs(os.path.dirname(BITBAR_DATA_FILE), exist_ok=True)
+    with open(BITBAR_DATA_FILE, 'w') as f:
+        json.dump(data, f)
+
+
 def make_call(prog, *args):
     res = []
     res.append('bash="{0}"'.format(prog))
@@ -49,10 +66,15 @@ def make_call(prog, *args):
 
 
 def get_stats_for_country(country):
-    world = json.loads(urlopen(Request(
-        COVID_API_URL,
-        headers={"Accept": 'application/json'}
-    )).read())
+    try:
+        request = Request(
+            COVID_API_URL,
+            headers={"Accept": 'application/json'}
+        )
+        world = json.loads(urlopen(request).read())
+        save_data(world)
+    except Exception as e:
+        world = load_data()
     countries = [country["Slug"] for country in world["Countries"]]
     index = countries.index(country)
     return world["Countries"][index]
